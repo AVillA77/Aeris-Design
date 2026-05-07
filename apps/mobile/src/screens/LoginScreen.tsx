@@ -1,86 +1,77 @@
 import React, { useState } from 'react'
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native'
+import {
+  View, Text, TextInput, TouchableOpacity,
+  StyleSheet, KeyboardAvoidingView, Platform, ActivityIndicator,
+} from 'react-native'
 import { useAuthStore } from '../store/auth'
 
 export function LoginScreen({ navigation }: any) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const login = useAuthStore((state) => state.login)
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
+  const login = useAuthStore((s) => s.login)
 
   const handleLogin = async () => {
+    if (!email || !password) return setError('Completa todos los campos')
+    setError('')
+    setLoading(true)
     try {
       await login(email, password)
-    } catch (error) {
-      console.error('Login failed:', error)
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'Credenciales inválidas')
+    } finally {
+      setLoading(false)
     }
   }
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Aeris Finance</Text>
+    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={s.container}>
+      <View style={s.card}>
+        <Text style={s.title}>Aeris Finance</Text>
+        <Text style={s.subtitle}>Gestiona tus finanzas</Text>
 
-      <TextInput
-        style={styles.input}
-        placeholder="Email"
-        value={email}
-        onChangeText={setEmail}
-        keyboardType="email-address"
-      />
+        {!!error && <Text style={s.error}>{error}</Text>}
 
-      <TextInput
-        style={styles.input}
-        placeholder="Password"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-      />
+        <TextInput
+          style={s.input}
+          placeholder="Email"
+          placeholderTextColor="#9ca3af"
+          value={email}
+          onChangeText={setEmail}
+          keyboardType="email-address"
+          autoCapitalize="none"
+        />
+        <TextInput
+          style={s.input}
+          placeholder="Contraseña"
+          placeholderTextColor="#9ca3af"
+          value={password}
+          onChangeText={setPassword}
+          secureTextEntry
+        />
 
-      <TouchableOpacity style={styles.button} onPress={handleLogin}>
-        <Text style={styles.buttonText}>Login</Text>
-      </TouchableOpacity>
+        <TouchableOpacity style={s.button} onPress={handleLogin} disabled={loading}>
+          {loading ? <ActivityIndicator color="#fff" /> : <Text style={s.buttonText}>Iniciar sesión</Text>}
+        </TouchableOpacity>
 
-      <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-        <Text style={styles.link}>Don't have an account? Register</Text>
-      </TouchableOpacity>
-    </View>
+        <TouchableOpacity onPress={() => navigation.navigate('Register')}>
+          <Text style={s.link}>¿No tienes cuenta? <Text style={s.linkBold}>Regístrate</Text></Text>
+        </TouchableOpacity>
+      </View>
+    </KeyboardAvoidingView>
   )
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 20,
-    justifyContent: 'center',
-    backgroundColor: '#ffffff',
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    marginBottom: 40,
-    textAlign: 'center',
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    padding: 12,
-    marginBottom: 12,
-    borderRadius: 8,
-  },
-  button: {
-    backgroundColor: '#0066cc',
-    padding: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginTop: 20,
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  link: {
-    color: '#0066cc',
-    marginTop: 20,
-    textAlign: 'center',
-  },
+const s = StyleSheet.create({
+  container: { flex: 1, backgroundColor: '#1d4ed8', justifyContent: 'center', padding: 24 },
+  card: { backgroundColor: '#fff', borderRadius: 20, padding: 28, shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 20, elevation: 8 },
+  title: { fontSize: 28, fontWeight: '800', textAlign: 'center', color: '#111827', marginBottom: 4 },
+  subtitle: { fontSize: 14, color: '#6b7280', textAlign: 'center', marginBottom: 24 },
+  error: { backgroundColor: '#fef2f2', color: '#dc2626', padding: 10, borderRadius: 8, marginBottom: 12, fontSize: 13 },
+  input: { borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 10, padding: 14, marginBottom: 12, fontSize: 15, color: '#111827' },
+  button: { backgroundColor: '#1d4ed8', borderRadius: 10, padding: 14, alignItems: 'center', marginTop: 4 },
+  buttonText: { color: '#fff', fontWeight: '700', fontSize: 15 },
+  link: { textAlign: 'center', color: '#6b7280', marginTop: 16, fontSize: 14 },
+  linkBold: { color: '#1d4ed8', fontWeight: '600' },
 })

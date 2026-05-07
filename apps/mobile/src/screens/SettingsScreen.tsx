@@ -1,23 +1,104 @@
-import React from 'react'
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
+import React, { useState } from 'react'
+import {
+  View, Text, TextInput, TouchableOpacity, StyleSheet,
+  ScrollView, Alert, ActivityIndicator,
+} from 'react-native'
 import { useAuthStore } from '../store/auth'
+import { api } from '../services/api'
 
 export function SettingsScreen() {
-  const logout = useAuthStore((state) => state.logout)
+  const { user, logout } = useAuthStore()
+  const [name, setName] = useState(user?.name || '')
+  const [email, setEmail] = useState(user?.email || '')
+  const [newPw, setNewPw] = useState('')
+  const [confirmPw, setConfirmPw] = useState('')
+  const [saving, setSaving] = useState(false)
+
+  const handleSaveProfile = async () => {
+    setSaving(true)
+    try {
+      await api.put('/users/me', { name, email })
+      Alert.alert('Éxito', 'Perfil actualizado')
+    } catch (err: any) {
+      Alert.alert('Error', err.response?.data?.error || 'Error al actualizar')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleChangePassword = async () => {
+    if (newPw !== confirmPw) return Alert.alert('Error', 'Las contraseñas no coinciden')
+    if (newPw.length < 8) return Alert.alert('Error', 'Mínimo 8 caracteres')
+    setSaving(true)
+    try {
+      await api.put('/users/me', { password: newPw })
+      Alert.alert('Éxito', 'Contraseña actualizada')
+      setNewPw('')
+      setConfirmPw('')
+    } catch (err: any) {
+      Alert.alert('Error', err.response?.data?.error || 'Error al actualizar')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleLogout = () => {
+    Alert.alert('Cerrar sesión', '¿Estás seguro?', [
+      { text: 'Cancelar', style: 'cancel' },
+      { text: 'Cerrar sesión', style: 'destructive', onPress: logout },
+    ])
+  }
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Settings</Text>
-      <TouchableOpacity style={styles.button} onPress={logout}>
-        <Text style={styles.buttonText}>Logout</Text>
-      </TouchableOpacity>
-    </View>
+    <ScrollView style={s.container} contentContainerStyle={s.content}>
+      {/* Profile */}
+      <View style={s.card}>
+        <Text style={s.cardTitle}>Perfil</Text>
+        <Text style={s.label}>Nombre</Text>
+        <TextInput style={s.input} value={name} onChangeText={setName} />
+        <Text style={s.label}>Email</Text>
+        <TextInput style={s.input} value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" />
+        <TouchableOpacity style={s.button} onPress={handleSaveProfile} disabled={saving}>
+          {saving ? <ActivityIndicator color="#fff" size="small" /> : <Text style={s.buttonText}>Guardar cambios</Text>}
+        </TouchableOpacity>
+      </View>
+
+      {/* Password */}
+      <View style={s.card}>
+        <Text style={s.cardTitle}>Cambiar contraseña</Text>
+        <Text style={s.label}>Nueva contraseña</Text>
+        <TextInput style={s.input} value={newPw} onChangeText={setNewPw} secureTextEntry />
+        <Text style={s.label}>Confirmar contraseña</Text>
+        <TextInput style={s.input} value={confirmPw} onChangeText={setConfirmPw} secureTextEntry />
+        <TouchableOpacity style={s.button} onPress={handleChangePassword} disabled={saving}>
+          <Text style={s.buttonText}>Cambiar contraseña</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Account info */}
+      <View style={s.card}>
+        <Text style={s.cardTitle}>Cuenta</Text>
+        <Text style={s.infoText}>{user?.name}</Text>
+        <Text style={s.infoSubText}>{user?.email}</Text>
+        <TouchableOpacity style={s.logoutBtn} onPress={handleLogout}>
+          <Text style={s.logoutText}>Cerrar sesión</Text>
+        </TouchableOpacity>
+      </View>
+    </ScrollView>
   )
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20, backgroundColor: '#f5f5f5' },
-  title: { fontSize: 24, fontWeight: 'bold', marginBottom: 20 },
-  button: { backgroundColor: '#ff6b6b', padding: 12, borderRadius: 8, alignItems: 'center' },
-  buttonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
+const s = StyleSheet.create({
+  container: { flex: 1, backgroundColor: '#f9fafb' },
+  content: { padding: 16, paddingBottom: 40, gap: 14 },
+  card: { backgroundColor: '#fff', borderRadius: 16, padding: 18, shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 },
+  cardTitle: { fontSize: 16, fontWeight: '700', color: '#111827', marginBottom: 14 },
+  label: { fontSize: 13, fontWeight: '500', color: '#374151', marginBottom: 6 },
+  input: { borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 10, padding: 12, marginBottom: 14, fontSize: 15, color: '#111827' },
+  button: { backgroundColor: '#1d4ed8', borderRadius: 10, padding: 13, alignItems: 'center' },
+  buttonText: { color: '#fff', fontWeight: '700', fontSize: 14 },
+  infoText: { fontSize: 15, fontWeight: '600', color: '#111827', marginBottom: 2 },
+  infoSubText: { fontSize: 13, color: '#6b7280', marginBottom: 14 },
+  logoutBtn: { borderWidth: 1, borderColor: '#fca5a5', borderRadius: 10, padding: 13, alignItems: 'center' },
+  logoutText: { color: '#dc2626', fontWeight: '700', fontSize: 14 },
 })
