@@ -17,8 +17,7 @@
     "axios": "^1.6.5",
     "zustand": "^4.4.7",
     "recharts": "^2.10.3",
-    "date-fns": "^2.30.0",
-    "@aeris/shared": "workspace:*"
+    "date-fns": "^2.30.0"
   },
   "devDependencies": {
     "typescript": "^5.3.3",
