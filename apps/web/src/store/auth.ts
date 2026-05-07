@@ -18,6 +18,7 @@ interface AuthStore {
   register: (name: string, email: string, password: string) => Promise<void>
   logout: () => void
   setToken: (token: string | null) => void
+  setUser: (user: Partial<User>) => void
 }
 
 export const useAuthStore = create<AuthStore>()(
@@ -55,6 +56,7 @@ export const useAuthStore = create<AuthStore>()(
       },
 
       setToken: (token) => set({ token }),
+      setUser: (updates) => set((s) => ({ user: s.user ? { ...s.user, ...updates } : null })),
     }),
     { name: 'aeris-auth' }
   )

@@ -40,7 +40,7 @@ export function Reports() {
   for (const tx of transactions) {
     const key = tx.date.slice(0, 7)
     const entry = monthlyMap.get(key)
-    if (entry) entry[tx.type] += tx.amount
+    if (entry) entry[tx.type] += toNum(tx.amount)
   }
   const monthlyData = Array.from(monthlyMap.values())
 
@@ -56,15 +56,15 @@ export function Reports() {
   for (const tx of transactions.filter((t) => t.type === 'expense')) {
     const existing = categoryMap.get(tx.category_id)
     if (existing) {
-      existing.value += tx.amount
+      existing.value += toNum(tx.amount)
     } else {
-      categoryMap.set(tx.category_id, { name: tx.category_name, color: tx.category_color, value: tx.amount })
+      categoryMap.set(tx.category_id, { name: tx.category_name, color: tx.category_color, value: toNum(tx.amount) })
     }
   }
   const categoryData = Array.from(categoryMap.values()).sort((a, b) => b.value - a.value)
 
-  const totalIncome = transactions.filter((t) => t.type === 'income').reduce((s, t) => s + t.amount, 0)
-  const totalExpense = transactions.filter((t) => t.type === 'expense').reduce((s, t) => s + t.amount, 0)
+  const totalIncome = transactions.filter((t) => t.type === 'income').reduce((s, t) => s + toNum(t.amount), 0)
+  const totalExpense = transactions.filter((t) => t.type === 'expense').reduce((s, t) => s + toNum(t.amount), 0)
   const balance = totalIncome - totalExpense
 
   return (

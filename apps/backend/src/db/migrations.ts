@@ -66,6 +66,12 @@ const migrations = [
 
   CREATE INDEX IF NOT EXISTS idx_refresh_tokens_user_id ON refresh_tokens(user_id);
   `,
+  `
+  CREATE INDEX IF NOT EXISTS idx_transactions_category_id ON transactions(category_id);
+  CREATE INDEX IF NOT EXISTS idx_transactions_user_date   ON transactions(user_id, date DESC);
+  CREATE INDEX IF NOT EXISTS idx_budgets_user_id          ON budgets(user_id);
+  CREATE INDEX IF NOT EXISTS idx_categories_user_id       ON categories(user_id);
+  `,
 ];
 
 export async function runMigrations() {

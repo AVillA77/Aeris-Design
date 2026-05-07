@@ -3,9 +3,30 @@ import { transactionsService, type Transaction } from '../services/transactions'
 import { categoriesService, type Category } from '../services/categories'
 import { TransactionModal } from '../components/TransactionModal'
 import { format } from 'date-fns'
+import { fmt, toNum } from '../utils/format'
 
 const PAYMENT_LABELS: Record<string, string> = {
   cash: 'Efectivo', card: 'Tarjeta', transfer: 'Transferencia', other: 'Otro',
+}
+
+function exportToCSV(transactions: Transaction[]) {
+  const header = ['Fecha', 'Descripción', 'Categoría', 'Tipo', 'Método de pago', 'Monto']
+  const rows = transactions.map((tx) => [
+    tx.date,
+    `"${tx.description || ''}"`,
+    tx.category_name,
+    tx.type === 'income' ? 'Ingreso' : 'Gasto',
+    PAYMENT_LABELS[tx.payment_method],
+    toNum(tx.amount).toFixed(2),
+  ])
+  const csv = [header, ...rows].map((r) => r.join(',')).join('\n')
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `transacciones-${format(new Date(), 'yyyy-MM-dd')}.csv`
+  a.click()
+  URL.revokeObjectURL(url)
 }
 
 export function Transactions() {
@@ -65,12 +86,21 @@ export function Transactions() {
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Transacciones</h1>
-        <button
-          onClick={() => { setEditing(null); setShowModal(true) }}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
-        >
-          + Nueva transacción
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => exportToCSV(transactions)}
+            disabled={transactions.length === 0}
+            className="border border-gray-300 text-gray-600 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium disabled:opacity-40"
+          >
+            Exportar CSV
+          </button>
+          <button
+            onClick={() => { setEditing(null); setShowModal(true) }}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+          >
+            + Nueva transacción
+          </button>
+        </div>
       </div>
 
       {/* Filters */}

@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react'
 import {
-  BarChart, Bar, PieChart, Pie, Cell,
-  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
+  PieChart, Pie, Cell,
+  Tooltip, Legend, ResponsiveContainer,
 } from 'recharts'
 import { transactionsService, type Transaction } from '../services/transactions'
 import { budgetsService, type Budget } from '../services/budgets'
 import { useAuthStore } from '../store/auth'
 import { format, startOfMonth, endOfMonth } from 'date-fns'
 import { Link } from 'react-router-dom'
+import { toNum, fmt, pct } from '../utils/format'
 
 export function Dashboard() {
   const user = useAuthStore((s) => s.user)
@@ -29,20 +30,20 @@ export function Dashboard() {
     })
   }, [])
 
-  const totalIncome = transactions.filter((t) => t.type === 'income').reduce((s, t) => s + t.amount, 0)
-  const totalExpense = transactions.filter((t) => t.type === 'expense').reduce((s, t) => s + t.amount, 0)
+  const totalIncome = transactions.filter((t) => t.type === 'income').reduce((s, t) => s + toNum(t.amount), 0)
+  const totalExpense = transactions.filter((t) => t.type === 'expense').reduce((s, t) => s + toNum(t.amount), 0)
   const balance = totalIncome - totalExpense
 
   const categoryMap = new Map<string, { name: string; color: string; value: number }>()
   for (const tx of transactions.filter((t) => t.type === 'expense')) {
     const e = categoryMap.get(tx.category_id)
-    if (e) e.value += tx.amount
-    else categoryMap.set(tx.category_id, { name: tx.category_name, color: tx.category_color, value: tx.amount })
+    if (e) e.value += toNum(tx.amount)
+    else categoryMap.set(tx.category_id, { name: tx.category_name, color: tx.category_color, value: toNum(tx.amount) })
   }
   const categoryData = Array.from(categoryMap.values())
 
   const recentTx = [...transactions].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 5)
-  const alertBudgets = budgets.filter((b) => b.spent / b.limit_amount >= 0.8)
+  const alertBudgets = budgets.filter((b) => pct(b.spent, b.limit_amount) >= 80)
 
   if (loading) return <div className="p-6 text-center text-gray-400">Cargando...</div>
 
@@ -64,6 +65,7 @@ export function Dashboard() {
             <p className="text-sm text-gray-500 mb-1">{label}</p>
             <p className={`text-3xl font-bold ${color}`}>
               {value >= 0 ? '' : '-'}${Math.abs(value).toFixed(2)}
+
             </p>
           </div>
         ))}
@@ -74,14 +76,11 @@ export function Dashboard() {
         <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
           <p className="text-amber-800 font-medium text-sm mb-2">⚠ Presupuestos próximos al límite</p>
           <div className="flex flex-wrap gap-2">
-            {alertBudgets.map((b) => {
-              const pct = Math.round((b.spent / b.limit_amount) * 100)
-              return (
-                <span key={b.id} className="bg-amber-100 text-amber-800 text-xs px-2 py-1 rounded-full font-medium">
-                  {b.category_name}: {pct}%
-                </span>
-              )
-            })}
+            {alertBudgets.map((b) => (
+              <span key={b.id} className="bg-amber-100 text-amber-800 text-xs px-2 py-1 rounded-full font-medium">
+                {b.category_name}: {Math.round(pct(b.spent, b.limit_amount))}%
+              </span>
+            ))}
           </div>
         </div>
       )}
@@ -105,7 +104,7 @@ export function Dashboard() {
                     <Cell key={entry.name} fill={entry.color} />
                   ))}
                 </Pie>
-                <Tooltip formatter={(v: number) => `$${v.toFixed(2)}`} />
+                <Tooltip formatter={(v: number) => `$${fmt(v)}`} />
                 <Legend />
               </PieChart>
             </ResponsiveContainer>
@@ -137,7 +136,7 @@ export function Dashboard() {
                     </div>
                   </div>
                   <span className={`text-sm font-semibold ml-3 whitespace-nowrap ${tx.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
-                    {tx.type === 'income' ? '+' : '-'}${tx.amount.toFixed(2)}
+                    {tx.type === 'income' ? '+' : '-'}${fmt(tx.amount)}
                   </span>
                 </div>
               ))}

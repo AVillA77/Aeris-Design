@@ -18,7 +18,7 @@ function Card({ title, children }: Section) {
 }
 
 export function Settings() {
-  const { user, setToken, logout } = useAuthStore()
+  const { user, logout, setUser } = useAuthStore()
   const navigate = useNavigate()
 
   const [profile, setProfile] = useState({ name: user?.name || '', email: user?.email || '' })
@@ -32,7 +32,8 @@ export function Settings() {
     setSaving(true)
     setProfileMsg(null)
     try {
-      await api.put('/users/me', { name: profile.name, email: profile.email })
+      const { data } = await api.put('/users/me', { name: profile.name, email: profile.email })
+      setUser({ name: data.name, email: data.email })
       setProfileMsg({ type: 'ok', text: 'Perfil actualizado correctamente' })
     } catch (err: any) {
       setProfileMsg({ type: 'err', text: err.response?.data?.error || 'Error al actualizar' })
