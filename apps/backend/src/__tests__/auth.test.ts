@@ -12,9 +12,10 @@ beforeEach(() => vi.clearAllMocks())
 describe('POST /api/auth/register', () => {
   it('creates a user and returns tokens', async () => {
     mockDb.query
-      .mockResolvedValueOnce({ rows: [] })              // check existing email
-      .mockResolvedValueOnce({ rows: [{ ...TEST_USER, role: 'user' }] }) // insert user
-      .mockResolvedValueOnce({ rows: [] })              // insert refresh token
+      .mockResolvedValueOnce({ rows: [] })                                 // check existing email
+      .mockResolvedValueOnce({ rows: [{ ...TEST_USER, role: 'user' }] })  // insert user
+      .mockResolvedValueOnce({ rows: [] })                                 // insert refresh token
+      .mockResolvedValueOnce({ rows: [] })                                 // seed default categories
 
     const res = await request(app).post('/api/auth/register').send({
       name: 'Test User',

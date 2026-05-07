@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { db } from '../db/client.js';
 import { signAccessToken, generateRefreshToken } from '../utils/jwt.js';
 import { verifyAccessToken } from '../utils/jwt.js';
+import { seedDefaultCategories } from '../db/seeds.js';
 
 const registerSchema = z.object({
   email: z.string().email(),
@@ -38,10 +39,13 @@ export async function register(req: Request, res: Response) {
   const refreshToken = generateRefreshToken();
   const expiresAt = new Date(Date.now() + REFRESH_TOKEN_TTL_DAYS * 86400 * 1000);
 
-  await db.query(
-    'INSERT INTO refresh_tokens (token, user_id, expires_at) VALUES ($1, $2, $3)',
-    [refreshToken, user.id, expiresAt],
-  );
+  await Promise.all([
+    db.query(
+      'INSERT INTO refresh_tokens (token, user_id, expires_at) VALUES ($1, $2, $3)',
+      [refreshToken, user.id, expiresAt],
+    ),
+    seedDefaultCategories(user.id),
+  ]);
 
   res.status(201).json({ user, accessToken, refreshToken });
 }

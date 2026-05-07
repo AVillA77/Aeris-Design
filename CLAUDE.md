@@ -21,11 +21,19 @@ Monorepo de finanzas personales y laborales. Rama de desarrollo: `claude/finance
 ## Comandos útiles
 
 ```bash
-# Backend
-cd apps/backend && pnpm dev
+# Setup inicial (genera .env automáticamente)
+pnpm setup
 
-# Web
-cd apps/web && pnpm dev
+# Docker (opción recomendada)
+docker-compose --env-file .env.docker up --build
+
+# Desarrollo local
+pnpm install
+cd apps/backend && pnpm dev   # terminal 1
+cd apps/web && pnpm dev       # terminal 2
+
+# Tests
+cd apps/backend && pnpm test
 ```
 
 ## Push

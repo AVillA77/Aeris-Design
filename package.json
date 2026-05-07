@@ -12,6 +12,7 @@
     "packages/ui"
   ],
   "scripts": {
+    "setup": "sh scripts/setup.sh",
     "dev": "pnpm --recursive --parallel run dev",
     "build": "pnpm --recursive run build",
     "test": "pnpm --recursive run test",
