@@ -1,110 +1,150 @@
-import { useEffect } from 'react'
-import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
-import { useTransactionStore } from '../store/transactions'
+import { useEffect, useState } from 'react'
+import {
+  BarChart, Bar, PieChart, Pie, Cell,
+  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
+} from 'recharts'
+import { transactionsService, type Transaction } from '../services/transactions'
+import { budgetsService, type Budget } from '../services/budgets'
+import { useAuthStore } from '../store/auth'
+import { format, startOfMonth, endOfMonth } from 'date-fns'
+import { Link } from 'react-router-dom'
 
 export function Dashboard() {
-  const { transactions, fetchTransactions, loading } = useTransactionStore()
+  const user = useAuthStore((s) => s.user)
+  const [transactions, setTransactions] = useState<Transaction[]>([])
+  const [budgets, setBudgets] = useState<Budget[]>([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetchTransactions()
+    const from = format(startOfMonth(new Date()), 'yyyy-MM-dd')
+    const to = format(endOfMonth(new Date()), 'yyyy-MM-dd')
+
+    Promise.all([
+      transactionsService.getAll({ from, to, limit: 100 }),
+      budgetsService.getAll(),
+    ]).then(([txRes, budgetRes]) => {
+      setTransactions(txRes.data.data)
+      setBudgets(budgetRes.data)
+      setLoading(false)
+    })
   }, [])
 
-  const totalIncome = transactions
-    .filter((t) => t.type === 'income')
-    .reduce((sum, t) => sum + t.amount, 0)
-
-  const totalExpense = transactions
-    .filter((t) => t.type === 'expense')
-    .reduce((sum, t) => sum + t.amount, 0)
-
+  const totalIncome = transactions.filter((t) => t.type === 'income').reduce((s, t) => s + t.amount, 0)
+  const totalExpense = transactions.filter((t) => t.type === 'expense').reduce((s, t) => s + t.amount, 0)
   const balance = totalIncome - totalExpense
 
-  const expensesByCategory = transactions
-    .filter((t) => t.type === 'expense')
-    .reduce((acc, t) => {
-      const existing = acc.find((item) => item.name === t.categoryId)
-      if (existing) {
-        existing.value += t.amount
-      } else {
-        acc.push({ name: t.categoryId, value: t.amount })
-      }
-      return acc
-    }, [] as { name: string; value: number }[])
+  const categoryMap = new Map<string, { name: string; color: string; value: number }>()
+  for (const tx of transactions.filter((t) => t.type === 'expense')) {
+    const e = categoryMap.get(tx.category_id)
+    if (e) e.value += tx.amount
+    else categoryMap.set(tx.category_id, { name: tx.category_name, color: tx.category_color, value: tx.amount })
+  }
+  const categoryData = Array.from(categoryMap.values())
 
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8']
+  const recentTx = [...transactions].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 5)
+  const alertBudgets = budgets.filter((b) => b.spent / b.limit_amount >= 0.8)
+
+  if (loading) return <div className="p-6 text-center text-gray-400">Cargando...</div>
 
   return (
     <div className="p-6">
-      <h1 className="text-3xl font-bold mb-8">Dashboard</h1>
-
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-gray-600 text-sm font-medium mb-2">Total Income</h2>
-          <p className="text-3xl font-bold text-green-600">${totalIncome.toFixed(2)}</p>
-        </div>
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-gray-600 text-sm font-medium mb-2">Total Expense</h2>
-          <p className="text-3xl font-bold text-red-600">${totalExpense.toFixed(2)}</p>
-        </div>
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-gray-600 text-sm font-medium mb-2">Balance</h2>
-          <p className={`text-3xl font-bold ${balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-            ${balance.toFixed(2)}
-          </p>
-        </div>
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-gray-900">Bienvenido, {user?.name}</h1>
+        <p className="text-gray-500 text-sm mt-0.5">{format(new Date(), 'MMMM yyyy')}</p>
       </div>
 
-      {/* Charts */}
-      {!loading && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Pie Chart */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-lg font-semibold mb-4">Expenses by Category</h2>
-            {expensesByCategory.length > 0 ? (
-              <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                  <Pie
-                    data={expensesByCategory}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={({ name, value }) => `${name}: $${value}`}
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="value"
-                  >
-                    {expensesByCategory.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip formatter={(value) => `$${value}`} />
-                </PieChart>
-              </ResponsiveContainer>
-            ) : (
-              <p className="text-gray-500 text-center py-8">No expense data</p>
-            )}
+      {/* Summary cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        {[
+          { label: 'Ingresos del mes', value: totalIncome, color: 'text-green-600', bg: 'bg-green-50' },
+          { label: 'Gastos del mes', value: totalExpense, color: 'text-red-600', bg: 'bg-red-50' },
+          { label: 'Balance', value: balance, color: balance >= 0 ? 'text-green-600' : 'text-red-600', bg: balance >= 0 ? 'bg-green-50' : 'bg-red-50' },
+        ].map(({ label, value, color, bg }) => (
+          <div key={label} className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+            <p className="text-sm text-gray-500 mb-1">{label}</p>
+            <p className={`text-3xl font-bold ${color}`}>
+              {value >= 0 ? '' : '-'}${Math.abs(value).toFixed(2)}
+            </p>
           </div>
+        ))}
+      </div>
 
-          {/* Bar Chart */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-lg font-semibold mb-4">Monthly Overview</h2>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={[{ month: 'Current', income: totalIncome, expense: totalExpense }]}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
-                <YAxis />
-                <Tooltip formatter={(value) => `$${value}`} />
-                <Legend />
-                <Bar dataKey="income" fill="#00C49F" />
-                <Bar dataKey="expense" fill="#FF8042" />
-              </BarChart>
-            </ResponsiveContainer>
+      {/* Budget alerts */}
+      {alertBudgets.length > 0 && (
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
+          <p className="text-amber-800 font-medium text-sm mb-2">⚠ Presupuestos próximos al límite</p>
+          <div className="flex flex-wrap gap-2">
+            {alertBudgets.map((b) => {
+              const pct = Math.round((b.spent / b.limit_amount) * 100)
+              return (
+                <span key={b.id} className="bg-amber-100 text-amber-800 text-xs px-2 py-1 rounded-full font-medium">
+                  {b.category_name}: {pct}%
+                </span>
+              )
+            })}
           </div>
         </div>
       )}
 
-      {loading && <p className="text-center text-gray-500">Loading...</p>}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        {/* Pie chart */}
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+          <h2 className="font-semibold text-gray-700 mb-4">Gastos por categoría</h2>
+          {categoryData.length === 0 ? (
+            <div className="text-center py-8 text-gray-400">
+              <p>Sin gastos este mes</p>
+              <Link to="/transactions" className="text-blue-500 text-sm hover:underline mt-1 inline-block">
+                Agregar transacción →
+              </Link>
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height={220}>
+              <PieChart>
+                <Pie data={categoryData} cx="50%" cy="50%" outerRadius={85} dataKey="value" nameKey="name">
+                  {categoryData.map((entry) => (
+                    <Cell key={entry.name} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip formatter={(v: number) => `$${v.toFixed(2)}`} />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
+          )}
+        </div>
+
+        {/* Recent transactions */}
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="font-semibold text-gray-700">Últimas transacciones</h2>
+            <Link to="/transactions" className="text-sm text-blue-500 hover:underline">Ver todas</Link>
+          </div>
+          {recentTx.length === 0 ? (
+            <div className="text-center py-8 text-gray-400">
+              <p>Sin transacciones este mes</p>
+              <Link to="/transactions" className="text-blue-500 text-sm hover:underline mt-1 inline-block">
+                Agregar transacción →
+              </Link>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {recentTx.map((tx) => (
+                <div key={tx.id} className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: tx.category_color }} />
+                    <div className="min-w-0">
+                      <p className="text-sm text-gray-800 truncate">{tx.description || tx.category_name}</p>
+                      <p className="text-xs text-gray-400">{format(new Date(tx.date), 'dd/MM/yyyy')}</p>
+                    </div>
+                  </div>
+                  <span className={`text-sm font-semibold ml-3 whitespace-nowrap ${tx.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
+                    {tx.type === 'income' ? '+' : '-'}${tx.amount.toFixed(2)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   )
 }
