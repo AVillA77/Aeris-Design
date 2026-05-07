@@ -2,7 +2,7 @@ import React from 'react'
 import { NavigationContainer } from '@react-navigation/native'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
-import { Text } from 'react-native'
+import { Text, View, ActivityIndicator } from 'react-native'
 import { useAuthStore } from './store/auth'
 import { LoginScreen } from './screens/LoginScreen'
 import { RegisterScreen } from './screens/RegisterScreen'
@@ -53,6 +53,15 @@ function AppTabs() {
 
 export default function App() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
+  const hydrated = useAuthStore((s) => s.hydrated)
+
+  if (!hydrated) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#1d4ed8' }}>
+        <ActivityIndicator size="large" color="#fff" />
+      </View>
+    )
+  }
 
   return (
     <NavigationContainer>

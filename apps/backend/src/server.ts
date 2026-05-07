@@ -9,6 +9,7 @@ import { budgetRoutes } from './routes/budgets.js';
 import { userRoutes } from './routes/users.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { requestLogger } from './middleware/logger.js';
+import { authLimiter, apiLimiter } from './middleware/rateLimit.js';
 import { runMigrations } from './db/migrations.js';
 
 dotenv.config();
@@ -24,11 +25,11 @@ app.use(cors({
 app.use(express.json());
 app.use(requestLogger);
 
-app.use('/api/auth', authRoutes);
-app.use('/api/transactions', transactionRoutes);
-app.use('/api/categories', categoryRoutes);
-app.use('/api/budgets', budgetRoutes);
-app.use('/api/users', userRoutes);
+app.use('/api/auth', authLimiter, authRoutes);
+app.use('/api/transactions', apiLimiter, transactionRoutes);
+app.use('/api/categories', apiLimiter, categoryRoutes);
+app.use('/api/budgets', apiLimiter, budgetRoutes);
+app.use('/api/users', apiLimiter, userRoutes);
 
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });

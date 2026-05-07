@@ -1,36 +1,36 @@
 {
   "name": "@aeris/desktop",
   "version": "1.0.0",
-  "type": "module",
-  "main": "dist/main.js",
+  "main": "dist-electron/main.js",
   "scripts": {
-    "dev": "concurrently \"vite\" \"wait-on http://localhost:5173 && electron .\"",
-    "build": "vite build && electron-builder",
-    "build:web": "vite build",
-    "build:electron": "electron-builder",
-    "lint": "eslint ."
+    "dev": "concurrently -k \"cd ../web && pnpm dev\" \"wait-on http://localhost:5173 && electron .\"",
+    "build": "pnpm build:web && tsc -p tsconfig.electron.json && electron-builder",
+    "build:web": "cd ../web && pnpm build && cp -r dist ../desktop/renderer",
+    "lint": "eslint src"
   },
-  "dependencies": {
-    "electron-squirrel-startup": "^1.1.0"
-  },
+  "dependencies": {},
   "devDependencies": {
     "typescript": "^5.3.3",
-    "vite": "^5.0.8",
     "electron": "^27.0.0",
     "electron-builder": "^24.6.4",
     "concurrently": "^8.2.2",
-    "wait-on": "^7.0.1"
+    "wait-on": "^7.0.1",
+    "@types/node": "^20.10.6"
   },
   "build": {
     "appId": "com.aeris.finance",
     "productName": "Aeris Finance",
+    "directories": {
+      "buildResources": "assets",
+      "output": "release"
+    },
     "files": [
-      "dist/**/*",
-      "node_modules/**/*",
+      "dist-electron/**/*",
+      "renderer/**/*",
       "package.json"
     ],
-    "directories": {
-      "buildResources": "assets"
-    }
+    "mac": { "category": "public.app-category.finance" },
+    "win": { "target": "nsis" },
+    "linux": { "target": "AppImage" }
   }
 }

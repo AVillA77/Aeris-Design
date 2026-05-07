@@ -1,7 +1,7 @@
-import { contextBridge } from 'electron'
+import { contextBridge, ipcRenderer } from 'electron';
 
-contextBridge.exposeInMainWorld('api', {
-  invoke: (channel: string, ...args: any[]) => {
-    // Placeholder for IPC communication
-  },
-})
+contextBridge.exposeInMainWorld('electronAPI', {
+  platform: process.platform,
+  onMenuAction: (cb: (action: string) => void) =>
+    ipcRenderer.on('menu-action', (_event, action) => cb(action)),
+});

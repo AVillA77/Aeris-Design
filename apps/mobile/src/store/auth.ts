@@ -1,4 +1,6 @@
 import { create } from 'zustand'
+import { createJSONStorage, persist } from 'zustand/middleware'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 import { authService } from '../services/auth'
 
 interface User { id: string; email: string; name: string; role: string }
@@ -8,33 +10,46 @@ interface AuthStore {
   user: User | null
   token: string | null
   refreshToken: string | null
+  hydrated: boolean
   login: (email: string, password: string) => Promise<void>
   register: (name: string, email: string, password: string) => Promise<void>
   logout: () => void
   setToken: (token: string | null) => void
 }
 
-export const useAuthStore = create<AuthStore>((set, get) => ({
-  isAuthenticated: false,
-  user: null,
-  token: null,
-  refreshToken: null,
+export const useAuthStore = create<AuthStore>()(
+  persist(
+    (set, get) => ({
+      isAuthenticated: false,
+      user: null,
+      token: null,
+      refreshToken: null,
+      hydrated: false,
 
-  login: async (email, password) => {
-    const { data } = await authService.login(email, password)
-    set({ isAuthenticated: true, user: data.user, token: data.accessToken, refreshToken: data.refreshToken })
-  },
+      login: async (email, password) => {
+        const { data } = await authService.login(email, password)
+        set({ isAuthenticated: true, user: data.user, token: data.accessToken, refreshToken: data.refreshToken })
+      },
 
-  register: async (name, email, password) => {
-    const { data } = await authService.register(name, email, password)
-    set({ isAuthenticated: true, user: data.user, token: data.accessToken, refreshToken: data.refreshToken })
-  },
+      register: async (name, email, password) => {
+        const { data } = await authService.register(name, email, password)
+        set({ isAuthenticated: true, user: data.user, token: data.accessToken, refreshToken: data.refreshToken })
+      },
 
-  logout: () => {
-    const rt = get().refreshToken
-    if (rt) authService.logout(rt).catch(() => {})
-    set({ isAuthenticated: false, user: null, token: null, refreshToken: null })
-  },
+      logout: () => {
+        const rt = get().refreshToken
+        if (rt) authService.logout(rt).catch(() => {})
+        set({ isAuthenticated: false, user: null, token: null, refreshToken: null })
+      },
 
-  setToken: (token) => set({ token }),
-}))
+      setToken: (token) => set({ token }),
+    }),
+    {
+      name: 'aeris-auth',
+      storage: createJSONStorage(() => AsyncStorage),
+      onRehydrateStorage: () => (state) => {
+        if (state) state.hydrated = true
+      },
+    }
+  )
+)
