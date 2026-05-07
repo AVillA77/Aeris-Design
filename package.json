@@ -1,0 +1,28 @@
+{
+  "name": "aeris-finance-tracker",
+  "version": "1.0.0",
+  "description": "Finance tracker app for personal and business expenses",
+  "type": "module",
+  "workspaces": [
+    "apps/backend",
+    "apps/web",
+    "apps/mobile",
+    "apps/desktop",
+    "packages/shared",
+    "packages/ui"
+  ],
+  "scripts": {
+    "dev": "pnpm --recursive --parallel run dev",
+    "build": "pnpm --recursive run build",
+    "test": "pnpm --recursive run test",
+    "lint": "pnpm --recursive run lint",
+    "type-check": "pnpm --recursive run type-check"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "name": "@aeris/mobile",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "expo start",
+    "dev:ios": "expo start --ios",
+    "dev:android": "expo start --android",
+    "build": "eas build",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "expo": "^50.0.0",
+    "react": "^18.2.0",
+    "react-native": "^0.73.0",
+    "react-native-screens": "^3.26.0",
+    "@react-navigation/native": "^6.1.9",
+    "@react-navigation/bottom-tabs": "^6.5.8",
+    "@react-navigation/stack": "^6.3.19",
+    "axios": "^1.6.5",
+    "zustand": "^4.4.7",
+    "@aeris/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3",
+    "eslint": "^8.56.0"
+  }
+}
