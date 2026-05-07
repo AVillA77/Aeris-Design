@@ -1,19 +1,12 @@
 import { Router } from 'express';
+import { requireAuth } from '../middleware/auth.js';
+import { getCategories, createCategory, updateCategory, deleteCategory } from '../controllers/categories.js';
 
 export const categoryRoutes = Router();
 
-categoryRoutes.get('/', (req, res) => {
-  res.json({ message: 'Get all categories - TODO: Implement' });
-});
+categoryRoutes.use(requireAuth);
 
-categoryRoutes.post('/', (req, res) => {
-  res.json({ message: 'Create category - TODO: Implement' });
-});
-
-categoryRoutes.put('/:id', (req, res) => {
-  res.json({ message: 'Update category - TODO: Implement' });
-});
-
-categoryRoutes.delete('/:id', (req, res) => {
-  res.json({ message: 'Delete category - TODO: Implement' });
-});
+categoryRoutes.get('/', getCategories);
+categoryRoutes.post('/', createCategory);
+categoryRoutes.put('/:id', updateCategory);
+categoryRoutes.delete('/:id', deleteCategory);

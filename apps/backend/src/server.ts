@@ -9,6 +9,7 @@ import { budgetRoutes } from './routes/budgets.js';
 import { userRoutes } from './routes/users.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { requestLogger } from './middleware/logger.js';
+import { runMigrations } from './db/migrations.js';
 
 dotenv.config();
 
@@ -35,6 +36,14 @@ app.get('/health', (req, res) => {
 
 app.use(errorHandler);
 
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
+async function start() {
+  await runMigrations();
+  app.listen(PORT, () => {
+    console.log(`Server running on http://localhost:${PORT}`);
+  });
+}
+
+start().catch((err) => {
+  console.error('Failed to start server:', err);
+  process.exit(1);
 });

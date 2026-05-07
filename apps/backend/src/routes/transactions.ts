@@ -1,23 +1,19 @@
 import { Router } from 'express';
+import { requireAuth } from '../middleware/auth.js';
+import {
+  getTransactions,
+  getTransaction,
+  createTransaction,
+  updateTransaction,
+  deleteTransaction,
+} from '../controllers/transactions.js';
 
 export const transactionRoutes = Router();
 
-transactionRoutes.get('/', (req, res) => {
-  res.json({ message: 'Get all transactions - TODO: Implement' });
-});
+transactionRoutes.use(requireAuth);
 
-transactionRoutes.get('/:id', (req, res) => {
-  res.json({ message: 'Get transaction by ID - TODO: Implement' });
-});
-
-transactionRoutes.post('/', (req, res) => {
-  res.json({ message: 'Create transaction - TODO: Implement' });
-});
-
-transactionRoutes.put('/:id', (req, res) => {
-  res.json({ message: 'Update transaction - TODO: Implement' });
-});
-
-transactionRoutes.delete('/:id', (req, res) => {
-  res.json({ message: 'Delete transaction - TODO: Implement' });
-});
+transactionRoutes.get('/', getTransactions);
+transactionRoutes.get('/:id', getTransaction);
+transactionRoutes.post('/', createTransaction);
+transactionRoutes.put('/:id', updateTransaction);
+transactionRoutes.delete('/:id', deleteTransaction);

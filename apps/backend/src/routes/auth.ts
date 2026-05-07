@@ -1,19 +1,9 @@
 import { Router } from 'express';
+import { register, login, logout, refreshToken } from '../controllers/auth.js';
 
 export const authRoutes = Router();
 
-authRoutes.post('/register', (req, res) => {
-  res.json({ message: 'Register endpoint - TODO: Implement' });
-});
-
-authRoutes.post('/login', (req, res) => {
-  res.json({ message: 'Login endpoint - TODO: Implement' });
-});
-
-authRoutes.post('/logout', (req, res) => {
-  res.json({ message: 'Logout endpoint - TODO: Implement' });
-});
-
-authRoutes.post('/refresh-token', (req, res) => {
-  res.json({ message: 'Refresh token endpoint - TODO: Implement' });
-});
+authRoutes.post('/register', register);
+authRoutes.post('/login', login);
+authRoutes.post('/logout', logout);
+authRoutes.post('/refresh-token', refreshToken);

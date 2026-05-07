@@ -1,27 +1,13 @@
 import { Router } from 'express';
+import { requireAuth } from '../middleware/auth.js';
+import { getBudgets, getBudget, createBudget, updateBudget, deleteBudget } from '../controllers/budgets.js';
 
 export const budgetRoutes = Router();
 
-budgetRoutes.get('/', (req, res) => {
-  res.json({ message: 'Get all budgets - TODO: Implement' });
-});
+budgetRoutes.use(requireAuth);
 
-budgetRoutes.get('/:id', (req, res) => {
-  res.json({ message: 'Get budget by ID - TODO: Implement' });
-});
-
-budgetRoutes.post('/', (req, res) => {
-  res.json({ message: 'Create budget - TODO: Implement' });
-});
-
-budgetRoutes.put('/:id', (req, res) => {
-  res.json({ message: 'Update budget - TODO: Implement' });
-});
-
-budgetRoutes.delete('/:id', (req, res) => {
-  res.json({ message: 'Delete budget - TODO: Implement' });
-});
-
-budgetRoutes.get('/:id/status', (req, res) => {
-  res.json({ message: 'Get budget status - TODO: Implement' });
-});
+budgetRoutes.get('/', getBudgets);
+budgetRoutes.get('/:id', getBudget);
+budgetRoutes.post('/', createBudget);
+budgetRoutes.put('/:id', updateBudget);
+budgetRoutes.delete('/:id', deleteBudget);
