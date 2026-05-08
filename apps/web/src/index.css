@@ -50,3 +50,17 @@ body {
 input, select, textarea {
   font-family: inherit;
 }
+
+/* Dark mode base */
+.dark body {
+  background-color: #09090b;
+  color: #fafafa;
+}
+
+/* Toast animation */
+@keyframes slide-in-from-right {
+  from { transform: translateX(100%); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+.animate-in { animation: slide-in-from-right 0.2s ease-out; }
+.slide-in-from-right { animation-name: slide-in-from-right; }

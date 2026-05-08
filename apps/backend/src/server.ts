@@ -6,6 +6,7 @@ import { authRoutes } from './routes/auth.js';
 import { transactionRoutes } from './routes/transactions.js';
 import { categoryRoutes } from './routes/categories.js';
 import { budgetRoutes } from './routes/budgets.js';
+import { goalRoutes } from './routes/goals.js';
 import { userRoutes } from './routes/users.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { requestLogger } from './middleware/logger.js';
@@ -29,6 +30,7 @@ app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/transactions', apiLimiter, transactionRoutes);
 app.use('/api/categories', apiLimiter, categoryRoutes);
 app.use('/api/budgets', apiLimiter, budgetRoutes);
+app.use('/api/goals', apiLimiter, goalRoutes);
 app.use('/api/users', apiLimiter, userRoutes);
 
 app.get('/health', (req, res) => {
