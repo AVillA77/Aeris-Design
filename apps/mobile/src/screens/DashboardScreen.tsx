@@ -3,18 +3,21 @@ import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-nati
 import { transactionsService, type Transaction } from '../services/transactions'
 import { budgetsService, type Budget } from '../services/budgets'
 import { useAuthStore } from '../store/auth'
+import { usePrefsStore, CURRENCIES } from '../store/prefs'
 
-function SummaryCard({ label, value, color }: { label: string; value: number; color: string }) {
+function SummaryCard({ label, value, color, sym }: { label: string; value: number; color: string; sym: string }) {
   return (
     <View style={s.summaryCard}>
       <Text style={s.summaryLabel}>{label}</Text>
-      <Text style={[s.summaryValue, { color }]}>${Math.abs(value).toFixed(2)}</Text>
+      <Text style={[s.summaryValue, { color }]}>{sym}{Math.abs(value).toFixed(2)}</Text>
     </View>
   )
 }
 
 export function DashboardScreen({ navigation }: any) {
   const user = useAuthStore((s) => s.user)
+  const currency = usePrefsStore((s) => s.currency)
+  const sym = CURRENCIES[currency].symbol
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [budgets, setBudgets] = useState<Budget[]>([])
   const [loading, setLoading] = useState(true)
@@ -45,19 +48,19 @@ export function DashboardScreen({ navigation }: any) {
 
   return (
     <ScrollView style={s.container} contentContainerStyle={s.content}>
-      <Text style={s.greeting}>Hola, {user?.name?.split(' ')[0]} 👋</Text>
+      <Text style={s.greeting}>Hola, {user?.name?.split(' ')[0]}</Text>
 
       {/* Summary */}
       <View style={s.summaryRow}>
-        <SummaryCard label="Ingresos" value={income} color="#16a34a" />
-        <SummaryCard label="Gastos" value={expense} color="#dc2626" />
-        <SummaryCard label="Balance" value={balance} color={balance >= 0 ? '#16a34a' : '#dc2626'} />
+        <SummaryCard label="Ingresos" value={income} color="#16a34a" sym={sym} />
+        <SummaryCard label="Gastos" value={expense} color="#dc2626" sym={sym} />
+        <SummaryCard label="Balance" value={balance} color={balance >= 0 ? '#16a34a' : '#dc2626'} sym={sym} />
       </View>
 
       {/* Budget alerts */}
       {alertBudgets.length > 0 && (
         <View style={s.alertBox}>
-          <Text style={s.alertTitle}>⚠ Presupuestos al límite</Text>
+          <Text style={s.alertTitle}>Presupuestos al límite</Text>
           {alertBudgets.map((b) => (
             <Text key={b.id} style={s.alertItem}>
               {b.category_name}: {Math.round((b.spent / b.limit_amount) * 100)}% usado
@@ -86,7 +89,7 @@ export function DashboardScreen({ navigation }: any) {
                 <Text style={s.txDate}>{tx.date}</Text>
               </View>
               <Text style={[s.txAmount, { color: tx.type === 'income' ? '#16a34a' : '#dc2626' }]}>
-                {tx.type === 'income' ? '+' : '-'}${tx.amount.toFixed(2)}
+                {tx.type === 'income' ? '+' : '-'}{sym}{tx.amount.toFixed(2)}
               </Text>
             </View>
           ))
@@ -105,14 +108,14 @@ const s = StyleSheet.create({
   summaryRow: { flexDirection: 'row', gap: 10, marginBottom: 16 },
   summaryCard: { flex: 1, backgroundColor: '#fff', borderRadius: 14, padding: 14, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 },
   summaryLabel: { fontSize: 11, color: '#6b7280', marginBottom: 4, fontWeight: '500' },
-  summaryValue: { fontSize: 16, fontWeight: '800' },
+  summaryValue: { fontSize: 15, fontWeight: '800' },
   alertBox: { backgroundColor: '#fffbeb', borderWidth: 1, borderColor: '#fbbf24', borderRadius: 12, padding: 14, marginBottom: 16 },
   alertTitle: { color: '#92400e', fontWeight: '700', fontSize: 13, marginBottom: 6 },
   alertItem: { color: '#92400e', fontSize: 12, marginBottom: 2 },
   section: { backgroundColor: '#fff', borderRadius: 16, padding: 16, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 },
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 },
   sectionTitle: { fontSize: 15, fontWeight: '700', color: '#111827' },
-  sectionLink: { fontSize: 13, color: '#1d4ed8', fontWeight: '600' },
+  sectionLink: { fontSize: 13, color: '#3b5bdb', fontWeight: '600' },
   empty: { color: '#9ca3af', textAlign: 'center', paddingVertical: 16, fontSize: 14 },
   txRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, borderTopWidth: 1, borderTopColor: '#f3f4f6' },
   dot: { width: 10, height: 10, borderRadius: 5, marginRight: 10 },

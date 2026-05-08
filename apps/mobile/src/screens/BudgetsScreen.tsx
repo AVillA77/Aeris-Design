@@ -5,6 +5,7 @@ import {
 } from 'react-native'
 import { budgetsService, type Budget } from '../services/budgets'
 import { categoriesService, type Category } from '../services/categories'
+import { usePrefsStore, CURRENCIES } from '../store/prefs'
 
 function ProgressBar({ value, max, color }: { value: number; max: number; color: string }) {
   const pct = max > 0 ? Math.min((value / max) * 100, 100) : 0
@@ -20,12 +21,14 @@ function BudgetModal({
   visible,
   budget,
   categories,
+  sym,
   onSave,
   onClose,
 }: {
   visible: boolean
   budget: Budget | null
   categories: Category[]
+  sym: string
   onSave: (d: { categoryId: string; limitAmount: number; period: 'monthly' | 'yearly' }) => Promise<void>
   onClose: () => void
 }) {
@@ -86,7 +89,7 @@ function BudgetModal({
             ))}
           </View>
 
-          <Text style={s.fieldLabel}>Límite</Text>
+          <Text style={s.fieldLabel}>Límite ({sym})</Text>
           <TextInput
             style={s.input}
             keyboardType="decimal-pad"
@@ -116,6 +119,8 @@ function BudgetModal({
 }
 
 export function BudgetsScreen() {
+  const currency = usePrefsStore((s) => s.currency)
+  const sym = CURRENCIES[currency].symbol
   const [budgets, setBudgets] = useState<Budget[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
@@ -152,7 +157,7 @@ export function BudgetsScreen() {
   return (
     <View style={s.container}>
       {loading ? (
-        <View style={s.center}><ActivityIndicator size="large" color="#1d4ed8" /></View>
+        <View style={s.center}><ActivityIndicator size="large" color="#3b5bdb" /></View>
       ) : (
         <FlatList
           data={budgets}
@@ -187,12 +192,12 @@ export function BudgetsScreen() {
 
                 <View style={s.cardBottom}>
                   <Text style={[s.spentText, danger && { color: '#dc2626' }, warning && !danger && { color: '#d97706' }]}>
-                    ${item.spent.toFixed(2)} gastado
+                    {sym}{item.spent.toFixed(2)} gastado
                   </Text>
-                  <Text style={s.limitText}>de ${item.limit_amount.toFixed(2)}</Text>
+                  <Text style={s.limitText}>de {sym}{item.limit_amount.toFixed(2)}</Text>
                 </View>
 
-                {danger && <Text style={s.dangerText}>⚠ Límite superado</Text>}
+                {danger && <Text style={s.dangerText}>Límite superado</Text>}
               </View>
             )
           }}
@@ -207,6 +212,7 @@ export function BudgetsScreen() {
         visible={showModal}
         budget={editing}
         categories={categories}
+        sym={sym}
         onSave={handleSave}
         onClose={() => { setShowModal(false); setEditing(null) }}
       />
@@ -226,7 +232,7 @@ const s = StyleSheet.create({
   periodBadge: { backgroundColor: '#f3f4f6', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 10 },
   periodText: { fontSize: 11, color: '#6b7280', fontWeight: '500' },
   cardActions: { flexDirection: 'row', gap: 12, alignItems: 'center' },
-  editText: { color: '#1d4ed8', fontSize: 13, fontWeight: '600' },
+  editText: { color: '#3b5bdb', fontSize: 13, fontWeight: '600' },
   deleteText: { color: '#ef4444', fontSize: 16 },
   progressBg: { height: 8, backgroundColor: '#f3f4f6', borderRadius: 4, overflow: 'hidden' },
   progressFill: { height: 8, borderRadius: 4 },
@@ -234,14 +240,13 @@ const s = StyleSheet.create({
   spentText: { fontSize: 13, fontWeight: '600', color: '#374151' },
   limitText: { fontSize: 13, color: '#9ca3af' },
   dangerText: { fontSize: 12, color: '#dc2626', fontWeight: '600', marginTop: 4 },
-  fab: { position: 'absolute', bottom: 24, right: 24, width: 56, height: 56, borderRadius: 28, backgroundColor: '#1d4ed8', justifyContent: 'center', alignItems: 'center', shadowColor: '#1d4ed8', shadowOpacity: 0.4, shadowRadius: 12, elevation: 6 },
+  fab: { position: 'absolute', bottom: 24, right: 24, width: 56, height: 56, borderRadius: 28, backgroundColor: '#3b5bdb', justifyContent: 'center', alignItems: 'center', shadowColor: '#3b5bdb', shadowOpacity: 0.4, shadowRadius: 12, elevation: 6 },
   fabText: { color: '#fff', fontSize: 28, lineHeight: 32 },
-  // Modal
   modalContainer: { flex: 1, backgroundColor: '#fff' },
   modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, borderBottomWidth: 1, borderBottomColor: '#f3f4f6' },
   modalTitle: { fontSize: 16, fontWeight: '700', color: '#111827' },
   cancelBtn: { fontSize: 15, color: '#6b7280' },
-  saveBtn: { fontSize: 15, color: '#1d4ed8', fontWeight: '700' },
+  saveBtn: { fontSize: 15, color: '#3b5bdb', fontWeight: '700' },
   modalContent: { padding: 20 },
   fieldLabel: { fontSize: 13, fontWeight: '600', color: '#374151', marginBottom: 8 },
   input: { borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 10, padding: 12, marginBottom: 20, fontSize: 15 },
@@ -251,7 +256,7 @@ const s = StyleSheet.create({
   chipText: { fontSize: 13, color: '#374151' },
   toggleRow: { flexDirection: 'row', borderRadius: 10, borderWidth: 1, borderColor: '#e5e7eb', overflow: 'hidden' },
   toggleBtn: { flex: 1, paddingVertical: 10, alignItems: 'center', backgroundColor: '#fff' },
-  toggleActive: { backgroundColor: '#1d4ed8' },
+  toggleActive: { backgroundColor: '#3b5bdb' },
   toggleText: { fontSize: 14, fontWeight: '600', color: '#6b7280' },
   toggleTextActive: { color: '#fff' },
 })

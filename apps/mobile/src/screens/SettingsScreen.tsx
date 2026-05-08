@@ -4,10 +4,14 @@ import {
   ScrollView, Alert, ActivityIndicator,
 } from 'react-native'
 import { useAuthStore } from '../store/auth'
+import { usePrefsStore, CURRENCIES, type CurrencyCode } from '../store/prefs'
 import { api } from '../services/api'
+
+const CURRENCY_LIST = Object.entries(CURRENCIES) as [CurrencyCode, { symbol: string; name: string }][]
 
 export function SettingsScreen() {
   const { user, logout } = useAuthStore()
+  const { currency, setCurrency } = usePrefsStore()
   const [name, setName] = useState(user?.name || '')
   const [email, setEmail] = useState(user?.email || '')
   const [newPw, setNewPw] = useState('')
@@ -49,8 +53,35 @@ export function SettingsScreen() {
     ])
   }
 
+  const handleCurrencyChange = () => {
+    const options = CURRENCY_LIST.map(([code, { symbol, name }]) => ({
+      text: `${symbol} — ${name} (${code})`,
+      onPress: () => setCurrency(code),
+    }))
+    Alert.alert('Seleccionar moneda', '', [
+      ...options,
+      { text: 'Cancelar', style: 'cancel' as const },
+    ])
+  }
+
+  const currentCurrency = CURRENCIES[currency]
+
   return (
     <ScrollView style={s.container} contentContainerStyle={s.content}>
+      {/* Preferences */}
+      <View style={s.card}>
+        <Text style={s.cardTitle}>Preferencias</Text>
+        <Text style={s.label}>Moneda</Text>
+        <TouchableOpacity style={s.currencyBtn} onPress={handleCurrencyChange}>
+          <Text style={s.currencySymbol}>{currentCurrency.symbol}</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={s.currencyName}>{currentCurrency.name}</Text>
+            <Text style={s.currencyCode}>{currency}</Text>
+          </View>
+          <Text style={s.chevron}>›</Text>
+        </TouchableOpacity>
+      </View>
+
       {/* Profile */}
       <View style={s.card}>
         <Text style={s.cardTitle}>Perfil</Text>
@@ -75,7 +106,7 @@ export function SettingsScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* Account info */}
+      {/* Account */}
       <View style={s.card}>
         <Text style={s.cardTitle}>Cuenta</Text>
         <Text style={s.infoText}>{user?.name}</Text>
@@ -95,8 +126,13 @@ const s = StyleSheet.create({
   cardTitle: { fontSize: 16, fontWeight: '700', color: '#111827', marginBottom: 14 },
   label: { fontSize: 13, fontWeight: '500', color: '#374151', marginBottom: 6 },
   input: { borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 10, padding: 12, marginBottom: 14, fontSize: 15, color: '#111827' },
-  button: { backgroundColor: '#1d4ed8', borderRadius: 10, padding: 13, alignItems: 'center' },
+  button: { backgroundColor: '#3b5bdb', borderRadius: 10, padding: 13, alignItems: 'center' },
   buttonText: { color: '#fff', fontWeight: '700', fontSize: 14 },
+  currencyBtn: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 12, padding: 14, gap: 12 },
+  currencySymbol: { fontSize: 22, fontWeight: '800', color: '#111827', width: 30, textAlign: 'center' },
+  currencyName: { fontSize: 14, fontWeight: '600', color: '#111827' },
+  currencyCode: { fontSize: 12, color: '#9ca3af', marginTop: 1 },
+  chevron: { fontSize: 22, color: '#d1d5db' },
   infoText: { fontSize: 15, fontWeight: '600', color: '#111827', marginBottom: 2 },
   infoSubText: { fontSize: 13, color: '#6b7280', marginBottom: 14 },
   logoutBtn: { borderWidth: 1, borderColor: '#fca5a5', borderRadius: 10, padding: 13, alignItems: 'center' },

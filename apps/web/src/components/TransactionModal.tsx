@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import type { Transaction, TransactionPayload } from '../services/transactions'
 import type { Category } from '../services/categories'
+import { useCurrencySymbol } from '../utils/format'
 
 interface Props {
   transaction?: Transaction | null
@@ -13,6 +14,7 @@ const PAYMENT_METHODS = ['cash', 'card', 'transfer', 'other'] as const
 const PAYMENT_LABELS = { cash: 'Efectivo', card: 'Tarjeta', transfer: 'Transferencia', other: 'Otro' }
 
 export function TransactionModal({ transaction, categories, onSave, onClose }: Props) {
+  const sym = useCurrencySymbol()
   const [form, setForm] = useState<TransactionPayload>({
     type: 'expense',
     amount: 0,
@@ -57,21 +59,21 @@ export function TransactionModal({ transaction, categories, onSave, onClose }: P
     }
   }
 
-  const inputCls = 'w-full px-4 py-2.5 border border-zinc-200 rounded-xl text-sm text-[#09090b] bg-white focus:outline-none focus:border-zinc-400 transition-colors'
-  const labelCls = 'block text-xs font-medium text-zinc-600 mb-1.5 uppercase tracking-wide'
+  const inputCls = 'w-full px-4 py-2.5 border border-zinc-200 dark:border-zinc-700 rounded-xl text-sm text-zinc-900 dark:text-zinc-100 bg-white dark:bg-zinc-800 focus:outline-none focus:border-zinc-400 transition-colors'
+  const labelCls = 'block text-xs font-medium text-zinc-600 dark:text-zinc-400 mb-1.5 uppercase tracking-wide'
 
   return (
     <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
-      <div className="bg-white rounded-2xl shadow-xl border border-zinc-100 w-full max-w-md mx-4 p-6">
-        <p className="font-display font-semibold text-[#09090b] mb-5">
+      <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-xl border border-zinc-100 dark:border-zinc-800 w-full max-w-md mx-4 p-6">
+        <p className="font-display font-semibold text-zinc-900 dark:text-zinc-100 mb-5">
           {transaction ? 'Editar transacción' : 'Nueva transacción'}
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {error && <div className="bg-red-50 border border-red-100 text-red-600 px-4 py-3 rounded-xl text-sm">{error}</div>}
+          {error && <div className="bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 text-red-600 dark:text-red-400 px-4 py-3 rounded-xl text-sm">{error}</div>}
 
           {/* Type toggle */}
-          <div className="flex rounded-xl overflow-hidden border border-zinc-200">
+          <div className="flex rounded-xl overflow-hidden border border-zinc-200 dark:border-zinc-700">
             {(['expense', 'income'] as const).map((t) => (
               <button
                 key={t}
@@ -80,7 +82,7 @@ export function TransactionModal({ transaction, categories, onSave, onClose }: P
                 className={`flex-1 py-2.5 text-sm font-medium transition-colors ${
                   form.type === t
                     ? t === 'expense' ? 'bg-red-500 text-white' : 'bg-emerald-500 text-white'
-                    : 'bg-white text-zinc-500 hover:bg-zinc-50'
+                    : 'bg-white dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-700'
                 }`}
               >
                 {t === 'expense' ? 'Gasto' : 'Ingreso'}
@@ -90,7 +92,7 @@ export function TransactionModal({ transaction, categories, onSave, onClose }: P
 
           {/* Amount */}
           <div>
-            <label className={labelCls}>Monto</label>
+            <label className={labelCls}>Monto ({sym})</label>
             <input
               type="number"
               min="0.01"
@@ -158,10 +160,10 @@ export function TransactionModal({ transaction, categories, onSave, onClose }: P
           </div>
 
           <div className="flex gap-2 pt-1">
-            <button type="button" onClick={onClose} className="flex-1 py-2.5 border border-zinc-200 rounded-xl text-sm text-zinc-600 hover:bg-zinc-50 transition-colors">
+            <button type="button" onClick={onClose} className="flex-1 py-2.5 border border-zinc-200 dark:border-zinc-700 rounded-xl text-sm text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors">
               Cancelar
             </button>
-            <button type="submit" disabled={loading} className="flex-1 py-2.5 bg-[#09090b] text-white rounded-xl text-sm hover:bg-zinc-800 transition-colors disabled:opacity-50">
+            <button type="submit" disabled={loading} className="flex-1 py-2.5 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 rounded-xl text-sm hover:bg-zinc-700 dark:hover:bg-zinc-100 transition-colors disabled:opacity-50">
               {loading ? 'Guardando...' : 'Guardar'}
             </button>
           </div>

@@ -5,6 +5,7 @@ import {
 } from 'react-native'
 import { transactionsService, type Transaction, type TransactionPayload } from '../services/transactions'
 import { categoriesService, type Category } from '../services/categories'
+import { usePrefsStore, CURRENCIES } from '../store/prefs'
 
 const PAYMENT_LABELS: Record<string, string> = {
   cash: 'Efectivo', card: 'Tarjeta', transfer: 'Transferencia', other: 'Otro',
@@ -14,12 +15,14 @@ function TransactionForm({
   visible,
   transaction,
   categories,
+  sym,
   onSave,
   onClose,
 }: {
   visible: boolean
   transaction: Transaction | null
   categories: Category[]
+  sym: string
   onSave: (p: TransactionPayload) => Promise<void>
   onClose: () => void
 }) {
@@ -74,7 +77,6 @@ function TransactionForm({
         </View>
 
         <View style={s.modalContent}>
-          {/* Type toggle */}
           <View style={s.toggleRow}>
             {(['expense', 'income'] as const).map((t) => (
               <TouchableOpacity
@@ -89,7 +91,7 @@ function TransactionForm({
             ))}
           </View>
 
-          <Text style={s.fieldLabel}>Monto</Text>
+          <Text style={s.fieldLabel}>Monto ({sym})</Text>
           <TextInput
             style={s.input}
             keyboardType="decimal-pad"
@@ -134,6 +136,8 @@ function TransactionForm({
 }
 
 export function TransactionsScreen() {
+  const currency = usePrefsStore((s) => s.currency)
+  const sym = CURRENCIES[currency].symbol
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
@@ -175,7 +179,6 @@ export function TransactionsScreen() {
 
   return (
     <View style={s.container}>
-      {/* Filter bar */}
       <View style={s.filterBar}>
         {([['', 'Todos'], ['income', 'Ingresos'], ['expense', 'Gastos']] as const).map(([val, label]) => (
           <TouchableOpacity
@@ -189,7 +192,7 @@ export function TransactionsScreen() {
       </View>
 
       {loading ? (
-        <View style={s.center}><ActivityIndicator size="large" color="#1d4ed8" /></View>
+        <View style={s.center}><ActivityIndicator size="large" color="#3b5bdb" /></View>
       ) : (
         <FlatList
           data={transactions}
@@ -209,7 +212,7 @@ export function TransactionsScreen() {
                 <Text style={s.txMeta}>{item.category_name} · {PAYMENT_LABELS[item.payment_method]} · {item.date}</Text>
               </View>
               <Text style={[s.txAmount, { color: item.type === 'income' ? '#16a34a' : '#dc2626' }]}>
-                {item.type === 'income' ? '+' : '-'}${item.amount.toFixed(2)}
+                {item.type === 'income' ? '+' : '-'}{sym}{item.amount.toFixed(2)}
               </Text>
             </TouchableOpacity>
           )}
@@ -224,6 +227,7 @@ export function TransactionsScreen() {
         visible={showForm}
         transaction={editing}
         categories={categories}
+        sym={sym}
         onSave={handleSave}
         onClose={() => { setShowForm(false); setEditing(null) }}
       />
@@ -236,7 +240,7 @@ const s = StyleSheet.create({
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   filterBar: { flexDirection: 'row', padding: 12, gap: 8, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#f3f4f6' },
   filterBtn: { paddingHorizontal: 14, paddingVertical: 6, borderRadius: 20, backgroundColor: '#f3f4f6' },
-  filterBtnActive: { backgroundColor: '#1d4ed8' },
+  filterBtnActive: { backgroundColor: '#3b5bdb' },
   filterText: { fontSize: 13, color: '#6b7280', fontWeight: '500' },
   filterTextActive: { color: '#fff', fontWeight: '700' },
   empty: { textAlign: 'center', color: '#9ca3af', marginTop: 40, fontSize: 15 },
@@ -247,14 +251,14 @@ const s = StyleSheet.create({
   txDesc: { fontSize: 14, fontWeight: '600', color: '#111827' },
   txMeta: { fontSize: 12, color: '#9ca3af', marginTop: 2 },
   txAmount: { fontSize: 15, fontWeight: '800', paddingHorizontal: 14 },
-  fab: { position: 'absolute', bottom: 24, right: 24, width: 56, height: 56, borderRadius: 28, backgroundColor: '#1d4ed8', justifyContent: 'center', alignItems: 'center', shadowColor: '#1d4ed8', shadowOpacity: 0.4, shadowRadius: 12, elevation: 6 },
+  fab: { position: 'absolute', bottom: 24, right: 24, width: 56, height: 56, borderRadius: 28, backgroundColor: '#3b5bdb', justifyContent: 'center', alignItems: 'center', shadowColor: '#3b5bdb', shadowOpacity: 0.4, shadowRadius: 12, elevation: 6 },
   fabText: { color: '#fff', fontSize: 28, lineHeight: 32 },
   // Modal
   modalContainer: { flex: 1, backgroundColor: '#fff' },
   modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, borderBottomWidth: 1, borderBottomColor: '#f3f4f6' },
   modalTitle: { fontSize: 16, fontWeight: '700', color: '#111827' },
   cancelBtn: { fontSize: 15, color: '#6b7280' },
-  saveBtn: { fontSize: 15, color: '#1d4ed8', fontWeight: '700' },
+  saveBtn: { fontSize: 15, color: '#3b5bdb', fontWeight: '700' },
   modalContent: { padding: 20 },
   toggleRow: { flexDirection: 'row', borderRadius: 10, borderWidth: 1, borderColor: '#e5e7eb', overflow: 'hidden', marginBottom: 20 },
   toggleBtn: { flex: 1, paddingVertical: 10, alignItems: 'center', backgroundColor: '#fff' },

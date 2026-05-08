@@ -10,6 +10,7 @@ import { DashboardScreen } from './screens/DashboardScreen'
 import { TransactionsScreen } from './screens/TransactionsScreen'
 import { CategoriesScreen } from './screens/CategoriesScreen'
 import { BudgetsScreen } from './screens/BudgetsScreen'
+import { GoalsScreen } from './screens/GoalsScreen'
 import { SettingsScreen } from './screens/SettingsScreen'
 
 const Stack = createNativeStackNavigator()
@@ -17,9 +18,9 @@ const Tab = createBottomTabNavigator()
 
 const TABS = [
   { name: 'Dashboard', component: DashboardScreen, icon: '◉', label: 'Inicio' },
-  { name: 'Transactions', component: TransactionsScreen, icon: '⇄', label: 'Transacciones' },
-  { name: 'Categories', component: CategoriesScreen, icon: '⊞', label: 'Categorías' },
+  { name: 'Transactions', component: TransactionsScreen, icon: '⇄', label: 'Movimientos' },
   { name: 'Budgets', component: BudgetsScreen, icon: '◎', label: 'Presupuestos' },
+  { name: 'Goals', component: GoalsScreen, icon: '◎', label: 'Metas' },
   { name: 'Settings', component: SettingsScreen, icon: '⚙', label: 'Ajustes' },
 ]
 
@@ -27,12 +28,13 @@ function AppTabs() {
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
-        headerStyle: { backgroundColor: '#1e293b' },
-        headerTintColor: '#fff',
-        headerTitleStyle: { fontWeight: '700' },
-        tabBarActiveTintColor: '#1d4ed8',
+        headerStyle: { backgroundColor: '#ffffff' },
+        headerTintColor: '#09090b',
+        headerTitleStyle: { fontWeight: '700', fontSize: 15 },
+        headerShadowVisible: false,
+        tabBarActiveTintColor: '#3b5bdb',
         tabBarInactiveTintColor: '#9ca3af',
-        tabBarStyle: { paddingBottom: 4, height: 60 },
+        tabBarStyle: { paddingBottom: 4, height: 60, borderTopColor: '#f3f4f6' },
         tabBarIcon: ({ color, focused }) => {
           const tab = TABS.find((t) => t.name === route.name)
           return <Text style={{ fontSize: focused ? 20 : 17, color }}>{tab?.icon}</Text>
@@ -57,7 +59,7 @@ export default function App() {
 
   if (!hydrated) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#1d4ed8' }}>
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#3b5bdb' }}>
         <ActivityIndicator size="large" color="#fff" />
       </View>
     )

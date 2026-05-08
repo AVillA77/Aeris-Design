@@ -6,7 +6,7 @@ import {
 import { transactionsService, type Transaction } from '../services/transactions'
 import { format, subMonths, startOfMonth, endOfMonth } from 'date-fns'
 import { es } from 'date-fns/locale'
-import { toNum } from '../utils/format'
+import { toNum, useCurrencySymbol } from '../utils/format'
 
 const COLORS = ['#3b5bdb', '#8b5cf6', '#ec4899', '#ef4444', '#f97316', '#f59e0b', '#10b981', '#06b6d4']
 
@@ -27,6 +27,25 @@ function useTransactionData(months: number) {
   return { data, loading }
 }
 
+function exportCSV(transactions: Transaction[]) {
+  const header = ['Fecha', 'Descripción', 'Categoría', 'Tipo', 'Monto']
+  const rows = transactions.map((tx) => [
+    tx.date,
+    `"${tx.description || ''}"`,
+    tx.category_name,
+    tx.type === 'income' ? 'Ingreso' : 'Gasto',
+    toNum(tx.amount).toFixed(2),
+  ])
+  const csv = [header, ...rows].map((r) => r.join(',')).join('\n')
+  const blob = new Blob([`﻿${csv}`], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `reporte-${format(new Date(), 'yyyy-MM-dd')}.csv`
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
 const tooltipStyle = {
   border: '1px solid #e4e4e7',
   borderRadius: '12px',
@@ -35,6 +54,7 @@ const tooltipStyle = {
 }
 
 export function Reports() {
+  const sym = useCurrencySymbol()
   const [range, setRange] = useState(6)
   const { data: transactions, loading } = useTransactionData(range)
 
@@ -72,20 +92,32 @@ export function Reports() {
   const totalExpense = transactions.filter((t) => t.type === 'expense').reduce((s, t) => s + toNum(t.amount), 0)
   const balance = totalIncome - totalExpense
 
-  const cardCls = 'bg-white rounded-2xl border border-zinc-100 p-5'
+  const cardCls = 'bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-100 dark:border-zinc-800 p-5'
   const labelCls = 'text-[10px] font-semibold text-zinc-400 uppercase tracking-widest mb-3'
 
   return (
     <div className="p-7 space-y-6">
-      {/* Range selector */}
-      <div className="flex justify-end">
-        <div className="flex gap-1 bg-white border border-zinc-100 rounded-xl p-1">
+      {/* Header row */}
+      <div className="flex justify-end items-center gap-2">
+        <button
+          onClick={() => exportCSV(transactions)}
+          disabled={transactions.length === 0}
+          className="flex items-center gap-1.5 border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 px-3.5 py-2 rounded-xl hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors text-xs font-medium disabled:opacity-40"
+        >
+          <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <path d="M6.5 1v8M3 6.5l3.5 3.5 3.5-3.5M1 11h11" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          Exportar CSV
+        </button>
+        <div className="flex gap-1 bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-xl p-1">
           {[3, 6, 12].map((m) => (
             <button
               key={m}
               onClick={() => setRange(m)}
               className={`px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                range === m ? 'bg-[#09090b] text-white shadow-sm' : 'text-zinc-500 hover:text-zinc-800'
+                range === m
+                  ? 'bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 shadow-sm'
+                  : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200'
               }`}
             >
               {m}m
@@ -98,16 +130,16 @@ export function Reports() {
       <div className="grid grid-cols-3 gap-4">
         <div className={cardCls}>
           <p className={labelCls}>Ingresos</p>
-          <p className="font-display font-bold text-xl text-emerald-600 tabular-nums">${totalIncome.toFixed(2)}</p>
+          <p className="font-display font-bold text-xl text-emerald-600 tabular-nums">{sym}{totalIncome.toFixed(2)}</p>
         </div>
         <div className={cardCls}>
           <p className={labelCls}>Gastos</p>
-          <p className="font-display font-bold text-xl text-red-500 tabular-nums">${totalExpense.toFixed(2)}</p>
+          <p className="font-display font-bold text-xl text-red-500 tabular-nums">{sym}{totalExpense.toFixed(2)}</p>
         </div>
         <div className={cardCls}>
           <p className={labelCls}>Balance neto</p>
-          <p className={`font-display font-bold text-xl tabular-nums ${balance >= 0 ? 'text-[#09090b]' : 'text-red-500'}`}>
-            {balance >= 0 ? '+' : ''}${balance.toFixed(2)}
+          <p className={`font-display font-bold text-xl tabular-nums ${balance >= 0 ? 'text-zinc-900 dark:text-zinc-100' : 'text-red-500'}`}>
+            {balance >= 0 ? '+' : ''}{sym}{Math.abs(balance).toFixed(2)}
           </p>
         </div>
       </div>
@@ -124,7 +156,7 @@ export function Reports() {
                 <CartesianGrid strokeDasharray="3 3" stroke="#f4f4f5" />
                 <XAxis dataKey="month" tick={{ fontSize: 10, fill: '#a1a1aa' }} axisLine={false} tickLine={false} />
                 <YAxis tick={{ fontSize: 10, fill: '#a1a1aa' }} axisLine={false} tickLine={false} />
-                <Tooltip formatter={(v: number) => [`$${v.toFixed(2)}`, '']} contentStyle={tooltipStyle} cursor={{ fill: '#fafafa' }} />
+                <Tooltip formatter={(v: number) => [`${sym}${v.toFixed(2)}`, '']} contentStyle={tooltipStyle} cursor={{ fill: '#fafafa' }} />
                 <Legend iconType="circle" iconSize={6} wrapperStyle={{ fontSize: '11px' }} />
                 <Bar dataKey="income" name="Ingresos" fill="#10b981" radius={[4, 4, 0, 0]} />
                 <Bar dataKey="expense" name="Gastos" fill="#ef4444" radius={[4, 4, 0, 0]} />
@@ -140,7 +172,7 @@ export function Reports() {
                 <CartesianGrid strokeDasharray="3 3" stroke="#f4f4f5" />
                 <XAxis dataKey="month" tick={{ fontSize: 10, fill: '#a1a1aa' }} axisLine={false} tickLine={false} />
                 <YAxis tick={{ fontSize: 10, fill: '#a1a1aa' }} axisLine={false} tickLine={false} />
-                <Tooltip formatter={(v: number) => [`$${v.toFixed(2)}`, 'Balance']} contentStyle={tooltipStyle} />
+                <Tooltip formatter={(v: number) => [`${sym}${v.toFixed(2)}`, 'Balance']} contentStyle={tooltipStyle} />
                 <Line type="monotone" dataKey="balance" name="Balance" stroke="#3b5bdb" strokeWidth={2} dot={{ r: 3, fill: '#3b5bdb' }} />
               </LineChart>
             </ResponsiveContainer>
@@ -159,14 +191,14 @@ export function Reports() {
                       <Cell key={entry.name} fill={entry.color || COLORS[i % COLORS.length]} />
                     ))}
                   </Pie>
-                  <Tooltip formatter={(v: number) => [`$${v.toFixed(2)}`, '']} contentStyle={tooltipStyle} />
+                  <Tooltip formatter={(v: number) => [`${sym}${v.toFixed(2)}`, '']} contentStyle={tooltipStyle} />
                   <Legend iconType="circle" iconSize={7} wrapperStyle={{ fontSize: '11px' }} />
                 </PieChart>
               </ResponsiveContainer>
             )}
           </div>
 
-          {/* Category table */}
+          {/* Category breakdown */}
           <div className={cardCls}>
             <p className={labelCls}>Detalle por categoría</p>
             {categoryData.length === 0 ? (
@@ -180,11 +212,11 @@ export function Reports() {
                       <div className="flex justify-between text-xs mb-1.5">
                         <div className="flex items-center gap-2">
                           <div className="w-2 h-2 rounded-full" style={{ backgroundColor: cat.color || COLORS[i % COLORS.length] }} />
-                          <span className="text-zinc-700">{cat.name}</span>
+                          <span className="text-zinc-700 dark:text-zinc-300">{cat.name}</span>
                         </div>
-                        <span className="font-semibold text-[#09090b] tabular-nums">${cat.value.toFixed(2)}</span>
+                        <span className="font-semibold text-zinc-900 dark:text-zinc-100 tabular-nums">{sym}{cat.value.toFixed(2)}</span>
                       </div>
-                      <div className="w-full bg-zinc-100 rounded-full h-1">
+                      <div className="w-full bg-zinc-100 dark:bg-zinc-800 rounded-full h-1">
                         <div className="h-1 rounded-full" style={{ width: `${pct}%`, backgroundColor: cat.color || COLORS[i % COLORS.length] }} />
                       </div>
                     </div>
