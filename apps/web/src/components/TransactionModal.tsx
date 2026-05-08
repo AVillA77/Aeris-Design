@@ -10,6 +10,7 @@ interface Props {
 }
 
 const PAYMENT_METHODS = ['cash', 'card', 'transfer', 'other'] as const
+const PAYMENT_LABELS = { cash: 'Efectivo', card: 'Tarjeta', transfer: 'Transferencia', other: 'Otro' }
 
 export function TransactionModal({ transaction, categories, onSave, onClose }: Props) {
   const [form, setForm] = useState<TransactionPayload>({
@@ -56,27 +57,30 @@ export function TransactionModal({ transaction, categories, onSave, onClose }: P
     }
   }
 
+  const inputCls = 'w-full px-4 py-2.5 border border-zinc-200 rounded-xl text-sm text-[#09090b] bg-white focus:outline-none focus:border-zinc-400 transition-colors'
+  const labelCls = 'block text-xs font-medium text-zinc-600 mb-1.5 uppercase tracking-wide'
+
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-md mx-4 p-6">
-        <h2 className="text-xl font-bold mb-5">
+    <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
+      <div className="bg-white rounded-2xl shadow-xl border border-zinc-100 w-full max-w-md mx-4 p-6">
+        <p className="font-display font-semibold text-[#09090b] mb-5">
           {transaction ? 'Editar transacción' : 'Nueva transacción'}
-        </h2>
+        </p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {error && <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm">{error}</div>}
+          {error && <div className="bg-red-50 border border-red-100 text-red-600 px-4 py-3 rounded-xl text-sm">{error}</div>}
 
-          {/* Type */}
-          <div className="flex rounded-lg overflow-hidden border border-gray-300">
+          {/* Type toggle */}
+          <div className="flex rounded-xl overflow-hidden border border-zinc-200">
             {(['expense', 'income'] as const).map((t) => (
               <button
                 key={t}
                 type="button"
                 onClick={() => setForm((f) => ({ ...f, type: t }))}
-                className={`flex-1 py-2 text-sm font-medium transition-colors ${
+                className={`flex-1 py-2.5 text-sm font-medium transition-colors ${
                   form.type === t
-                    ? t === 'expense' ? 'bg-red-500 text-white' : 'bg-green-500 text-white'
-                    : 'bg-white text-gray-600 hover:bg-gray-50'
+                    ? t === 'expense' ? 'bg-red-500 text-white' : 'bg-emerald-500 text-white'
+                    : 'bg-white text-zinc-500 hover:bg-zinc-50'
                 }`}
               >
                 {t === 'expense' ? 'Gasto' : 'Ingreso'}
@@ -86,7 +90,7 @@ export function TransactionModal({ transaction, categories, onSave, onClose }: P
 
           {/* Amount */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Monto</label>
+            <label className={labelCls}>Monto</label>
             <input
               type="number"
               min="0.01"
@@ -94,42 +98,43 @@ export function TransactionModal({ transaction, categories, onSave, onClose }: P
               required
               value={form.amount || ''}
               onChange={(e) => setForm((f) => ({ ...f, amount: parseFloat(e.target.value) || 0 }))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+              className={inputCls}
+              placeholder="0.00"
             />
           </div>
 
           {/* Description */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+            <label className={labelCls}>Descripción</label>
             <input
               type="text"
               value={form.description}
               onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
               placeholder="Opcional"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+              className={inputCls}
             />
           </div>
 
           {/* Date */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Fecha</label>
+            <label className={labelCls}>Fecha</label>
             <input
               type="date"
               required
               value={form.date}
               onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+              className={inputCls}
             />
           </div>
 
           {/* Category */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Categoría</label>
+            <label className={labelCls}>Categoría</label>
             <select
               required
               value={form.categoryId}
               onChange={(e) => setForm((f) => ({ ...f, categoryId: e.target.value }))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+              className={inputCls}
             >
               <option value="">Seleccionar...</option>
               {categories.map((c) => (
@@ -140,33 +145,23 @@ export function TransactionModal({ transaction, categories, onSave, onClose }: P
 
           {/* Payment Method */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Método de pago</label>
+            <label className={labelCls}>Método de pago</label>
             <select
               value={form.paymentMethod}
               onChange={(e) => setForm((f) => ({ ...f, paymentMethod: e.target.value as typeof form.paymentMethod }))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+              className={inputCls}
             >
               {PAYMENT_METHODS.map((m) => (
-                <option key={m} value={m}>
-                  {{ cash: 'Efectivo', card: 'Tarjeta', transfer: 'Transferencia', other: 'Otro' }[m]}
-                </option>
+                <option key={m} value={m}>{PAYMENT_LABELS[m]}</option>
               ))}
             </select>
           </div>
 
-          <div className="flex gap-3 pt-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors"
-            >
+          <div className="flex gap-2 pt-1">
+            <button type="button" onClick={onClose} className="flex-1 py-2.5 border border-zinc-200 rounded-xl text-sm text-zinc-600 hover:bg-zinc-50 transition-colors">
               Cancelar
             </button>
-            <button
-              type="submit"
-              disabled={loading}
-              className="flex-1 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
-            >
+            <button type="submit" disabled={loading} className="flex-1 py-2.5 bg-[#09090b] text-white rounded-xl text-sm hover:bg-zinc-800 transition-colors disabled:opacity-50">
               {loading ? 'Guardando...' : 'Guardar'}
             </button>
           </div>

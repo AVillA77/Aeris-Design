@@ -1,13 +1,25 @@
 import { useAuthStore } from '../store/auth'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate, Link, useLocation } from 'react-router-dom'
+
+const PAGE_TITLES: Record<string, string> = {
+  '/': 'Dashboard',
+  '/transactions': 'Transacciones',
+  '/categories': 'Categorías',
+  '/budgets': 'Presupuestos',
+  '/reports': 'Reportes',
+  '/settings': 'Ajustes',
+}
 
 export function Header() {
   const { user, logout } = useAuthStore()
   const navigate = useNavigate()
+  const location = useLocation()
 
   const initials = user?.name
     ? user.name.split(' ').map((n) => n[0]).slice(0, 2).join('').toUpperCase()
     : '?'
+
+  const title = PAGE_TITLES[location.pathname] ?? ''
 
   const handleLogout = () => {
     logout()
@@ -15,23 +27,28 @@ export function Header() {
   }
 
   return (
-    <header className="bg-white border-b border-gray-100 px-6 py-3 flex justify-between items-center">
-      <div className="text-sm text-gray-500">
-        Bienvenido, <span className="font-semibold text-gray-800">{user?.name || 'Usuario'}</span>
-      </div>
-      <div className="flex items-center gap-3">
+    <header className="bg-white border-b border-zinc-100 px-6 h-14 flex items-center justify-between flex-shrink-0">
+      <h2 className="font-display font-medium text-[#09090b] text-sm tracking-wide">
+        {title}
+      </h2>
+
+      <div className="flex items-center gap-2">
         <Link
           to="/settings"
-          className="flex items-center gap-2 hover:bg-gray-50 rounded-lg px-2 py-1 transition-colors"
+          className="flex items-center gap-2.5 hover:bg-zinc-50 rounded-lg px-2.5 py-1.5 transition-colors group"
         >
-          <div className="w-8 h-8 rounded-full bg-blue-600 text-white text-xs font-bold flex items-center justify-center">
+          <div className="w-7 h-7 rounded-full bg-[#09090b] text-white text-[10px] font-semibold flex items-center justify-center tracking-wide flex-shrink-0">
             {initials}
           </div>
-          <span className="text-sm text-gray-600 hidden sm:block">{user?.email}</span>
+          <div className="hidden sm:block text-right">
+            <p className="text-xs font-medium text-zinc-800 leading-none">{user?.name}</p>
+            <p className="text-[10px] text-zinc-400 mt-0.5 leading-none">{user?.email}</p>
+          </div>
         </Link>
+        <div className="w-px h-5 bg-zinc-200" />
         <button
           onClick={handleLogout}
-          className="text-sm text-red-500 hover:text-red-700 font-medium transition-colors"
+          className="text-xs text-zinc-400 hover:text-zinc-700 font-medium transition-colors px-2 py-1.5"
         >
           Salir
         </button>

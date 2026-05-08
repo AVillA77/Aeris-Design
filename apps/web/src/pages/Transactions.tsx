@@ -3,6 +3,7 @@ import { transactionsService, type Transaction } from '../services/transactions'
 import { categoriesService, type Category } from '../services/categories'
 import { TransactionModal } from '../components/TransactionModal'
 import { format } from 'date-fns'
+import { es } from 'date-fns/locale'
 import { fmt, toNum } from '../utils/format'
 
 const PAYMENT_LABELS: Record<string, string> = {
@@ -81,134 +82,105 @@ export function Transactions() {
   }
 
   const totalPages = Math.ceil(total / filters.limit)
+  const inputCls = 'px-3 py-2 border border-zinc-200 rounded-xl text-xs bg-white text-zinc-700 focus:outline-none focus:border-zinc-400 transition-colors'
 
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Transacciones</h1>
+    <div className="p-7 space-y-5">
+      {/* Header row */}
+      <div className="flex justify-between items-center">
+        <p className="text-xs text-zinc-400 font-medium">{total} registros</p>
         <div className="flex gap-2">
           <button
             onClick={() => exportToCSV(transactions)}
             disabled={transactions.length === 0}
-            className="border border-gray-300 text-gray-600 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium disabled:opacity-40"
+            className="flex items-center gap-1.5 border border-zinc-200 text-zinc-600 px-3.5 py-2 rounded-xl hover:bg-zinc-50 transition-colors text-xs font-medium disabled:opacity-40"
           >
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <path d="M6.5 1v8M3 6.5l3.5 3.5 3.5-3.5M1 11h11" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
             Exportar CSV
           </button>
           <button
             onClick={() => { setEditing(null); setShowModal(true) }}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+            className="flex items-center gap-1.5 bg-[#09090b] text-white px-3.5 py-2 rounded-xl hover:bg-zinc-800 transition-colors text-xs font-medium"
           >
-            + Nueva transacción
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M6 1v10M1 6h10" strokeLinecap="round" />
+            </svg>
+            Nueva transacción
           </button>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-4 grid grid-cols-2 md:grid-cols-5 gap-3">
-        <select
-          value={filters.type}
-          onChange={(e) => setFilters((f) => ({ ...f, type: e.target.value as typeof f.type, page: 1 }))}
-          className="px-3 py-2 border border-gray-200 rounded-lg text-sm"
-        >
-          <option value="">Todos</option>
-          <option value="income">Ingresos</option>
-          <option value="expense">Gastos</option>
-        </select>
-
-        <select
-          value={filters.categoryId}
-          onChange={(e) => setFilters((f) => ({ ...f, categoryId: e.target.value, page: 1 }))}
-          className="px-3 py-2 border border-gray-200 rounded-lg text-sm"
-        >
-          <option value="">Todas las categorías</option>
-          {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-        </select>
-
-        <input
-          type="date"
-          value={filters.from}
-          onChange={(e) => setFilters((f) => ({ ...f, from: e.target.value, page: 1 }))}
-          className="px-3 py-2 border border-gray-200 rounded-lg text-sm"
-          placeholder="Desde"
-        />
-        <input
-          type="date"
-          value={filters.to}
-          onChange={(e) => setFilters((f) => ({ ...f, to: e.target.value, page: 1 }))}
-          className="px-3 py-2 border border-gray-200 rounded-lg text-sm"
-          placeholder="Hasta"
-        />
-
-        <button
-          onClick={() => setFilters({ page: 1, limit: 20, type: '', categoryId: '', from: '', to: '' })}
-          className="px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-500 hover:bg-gray-50 transition-colors"
-        >
-          Limpiar
-        </button>
+      <div className="bg-white rounded-2xl border border-zinc-100 p-4">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-2.5">
+          <select value={filters.type} onChange={(e) => setFilters((f) => ({ ...f, type: e.target.value as typeof f.type, page: 1 }))} className={inputCls}>
+            <option value="">Todos</option>
+            <option value="income">Ingresos</option>
+            <option value="expense">Gastos</option>
+          </select>
+          <select value={filters.categoryId} onChange={(e) => setFilters((f) => ({ ...f, categoryId: e.target.value, page: 1 }))} className={inputCls}>
+            <option value="">Todas las categorías</option>
+            {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+          </select>
+          <input type="date" value={filters.from} onChange={(e) => setFilters((f) => ({ ...f, from: e.target.value, page: 1 }))} className={inputCls} />
+          <input type="date" value={filters.to} onChange={(e) => setFilters((f) => ({ ...f, to: e.target.value, page: 1 }))} className={inputCls} />
+          <button onClick={() => setFilters({ page: 1, limit: 20, type: '', categoryId: '', from: '', to: '' })} className="px-3 py-2 border border-zinc-200 rounded-xl text-xs text-zinc-500 hover:bg-zinc-50 transition-colors font-medium">
+            Limpiar
+          </button>
+        </div>
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-2xl border border-zinc-100 overflow-hidden">
         {loading ? (
-          <div className="text-center py-16 text-gray-400">Cargando...</div>
+          <div className="text-center py-16 text-zinc-400 text-sm">Cargando...</div>
         ) : transactions.length === 0 ? (
-          <div className="text-center py-16 text-gray-400">
-            <p className="text-lg">Sin transacciones</p>
-            <p className="text-sm mt-1">Agrega una nueva para empezar</p>
+          <div className="text-center py-16">
+            <p className="text-zinc-400 text-sm mb-1.5">Sin transacciones</p>
+            <button onClick={() => { setEditing(null); setShowModal(true) }} className="text-xs text-zinc-600 hover:text-[#09090b] underline underline-offset-2">
+              Agregar la primera
+            </button>
           </div>
         ) : (
           <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-100">
-              <tr>
+            <thead>
+              <tr className="border-b border-zinc-100">
                 {['Fecha', 'Descripción', 'Categoría', 'Método', 'Tipo', 'Monto', ''].map((h) => (
-                  <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                    {h}
-                  </th>
+                  <th key={h} className="text-left px-4 py-3 text-[10px] font-semibold text-zinc-400 uppercase tracking-widest">{h}</th>
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-50">
+            <tbody className="divide-y divide-zinc-50">
               {transactions.map((tx) => (
-                <tr key={tx.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">
-                    {format(new Date(tx.date), 'dd/MM/yyyy')}
+                <tr key={tx.id} className="hover:bg-zinc-50/60 transition-colors group">
+                  <td className="px-4 py-3 text-xs text-zinc-500 whitespace-nowrap tabular-nums">
+                    {format(new Date(tx.date), 'dd MMM yyyy', { locale: es })}
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-800">
-                    {tx.description || <span className="text-gray-400 italic">—</span>}
+                  <td className="px-4 py-3 text-sm text-[#09090b] max-w-[180px] truncate">
+                    {tx.description || <span className="text-zinc-300 italic text-xs">—</span>}
                   </td>
                   <td className="px-4 py-3">
-                    <span
-                      className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium text-white"
-                      style={{ backgroundColor: tx.category_color }}
-                    >
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium text-white" style={{ backgroundColor: tx.category_color }}>
                       {tx.category_name}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-500">{PAYMENT_LABELS[tx.payment_method]}</td>
+                  <td className="px-4 py-3 text-xs text-zinc-400">{PAYMENT_LABELS[tx.payment_method]}</td>
                   <td className="px-4 py-3">
-                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                      tx.type === 'income' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                    }`}>
+                    <span className={`text-[11px] font-medium px-2.5 py-1 rounded-full ${tx.type === 'income' ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-600'}`}>
                       {tx.type === 'income' ? 'Ingreso' : 'Gasto'}
                     </span>
                   </td>
-                  <td className={`px-4 py-3 text-sm font-semibold whitespace-nowrap ${
-                    tx.type === 'income' ? 'text-green-600' : 'text-red-600'
-                  }`}>
-                    {tx.type === 'income' ? '+' : '-'}${tx.amount.toFixed(2)}
+                  <td className={`px-4 py-3 text-sm font-semibold whitespace-nowrap tabular-nums ${tx.type === 'income' ? 'text-emerald-600' : 'text-red-500'}`}>
+                    {tx.type === 'income' ? '+' : '-'}${fmt(tx.amount)}
                   </td>
                   <td className="px-4 py-3">
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => { setEditing(tx); setShowModal(true) }}
-                        className="text-blue-500 hover:text-blue-700 text-xs font-medium"
-                      >
+                    <div className="flex gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button onClick={() => { setEditing(tx); setShowModal(true) }} className="text-[11px] text-zinc-400 hover:text-[#09090b] font-medium transition-colors">
                         Editar
                       </button>
-                      <button
-                        onClick={() => setConfirmDelete(tx.id)}
-                        className="text-red-400 hover:text-red-600 text-xs font-medium"
-                      >
+                      <button onClick={() => setConfirmDelete(tx.id)} className="text-[11px] text-zinc-300 hover:text-red-500 font-medium transition-colors">
                         Borrar
                       </button>
                     </div>
@@ -219,54 +191,30 @@ export function Transactions() {
           </table>
         )}
 
-        {/* Pagination */}
         {totalPages > 1 && (
-          <div className="flex justify-between items-center px-4 py-3 border-t border-gray-100 text-sm text-gray-500">
+          <div className="flex justify-between items-center px-4 py-3 border-t border-zinc-100 text-xs text-zinc-400">
             <span>{total} registros</span>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setFilters((f) => ({ ...f, page: f.page - 1 }))}
-                disabled={filters.page === 1}
-                className="px-3 py-1 rounded border border-gray-200 disabled:opacity-40 hover:bg-gray-50"
-              >
-                ←
-              </button>
-              <span className="px-3 py-1">{filters.page} / {totalPages}</span>
-              <button
-                onClick={() => setFilters((f) => ({ ...f, page: f.page + 1 }))}
-                disabled={filters.page === totalPages}
-                className="px-3 py-1 rounded border border-gray-200 disabled:opacity-40 hover:bg-gray-50"
-              >
-                →
-              </button>
+            <div className="flex items-center gap-1">
+              <button onClick={() => setFilters((f) => ({ ...f, page: f.page - 1 }))} disabled={filters.page === 1} className="px-3 py-1.5 rounded-lg border border-zinc-200 disabled:opacity-40 hover:bg-zinc-50 transition-colors">←</button>
+              <span className="px-3">{filters.page} / {totalPages}</span>
+              <button onClick={() => setFilters((f) => ({ ...f, page: f.page + 1 }))} disabled={filters.page === totalPages} className="px-3 py-1.5 rounded-lg border border-zinc-200 disabled:opacity-40 hover:bg-zinc-50 transition-colors">→</button>
             </div>
           </div>
         )}
       </div>
 
-      {/* Modal */}
       {showModal && (
-        <TransactionModal
-          transaction={editing}
-          categories={categories}
-          onSave={handleSave}
-          onClose={() => { setShowModal(false); setEditing(null) }}
-        />
+        <TransactionModal transaction={editing} categories={categories} onSave={handleSave} onClose={() => { setShowModal(false); setEditing(null) }} />
       )}
 
-      {/* Confirm delete */}
       {confirmDelete && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 max-w-sm mx-4 text-center shadow-xl">
-            <p className="text-gray-800 font-medium mb-1">¿Eliminar transacción?</p>
-            <p className="text-gray-500 text-sm mb-5">Esta acción no se puede deshacer.</p>
-            <div className="flex gap-3">
-              <button onClick={() => setConfirmDelete(null)} className="flex-1 py-2 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50">
-                Cancelar
-              </button>
-              <button onClick={() => handleDelete(confirmDelete)} className="flex-1 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
-                Eliminar
-              </button>
+        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-6 max-w-sm mx-4 shadow-xl border border-zinc-100">
+            <p className="font-display font-semibold text-[#09090b] mb-1">¿Eliminar transacción?</p>
+            <p className="text-zinc-500 text-sm mb-5">Esta acción no se puede deshacer.</p>
+            <div className="flex gap-2">
+              <button onClick={() => setConfirmDelete(null)} className="flex-1 py-2.5 border border-zinc-200 rounded-xl text-sm text-zinc-600 hover:bg-zinc-50 transition-colors">Cancelar</button>
+              <button onClick={() => handleDelete(confirmDelete)} className="flex-1 py-2.5 bg-red-500 text-white rounded-xl text-sm hover:bg-red-600 transition-colors">Eliminar</button>
             </div>
           </div>
         </div>
